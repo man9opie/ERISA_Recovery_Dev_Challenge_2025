@@ -1,0 +1,35 @@
+<article class="card" id="notes-card">
+  <header><strong>Notes & Annotations</strong></header>
+
+  <div id="notes-list" class="notes-list">
+    {% include "claims/_notes_list.html" with claim=claim %}
+  </div>
+
+  <form hx-post="{% url 'claims:add_note' claim.pk %}"
+        hx-target="#notes-card" hx-swap="outerHTML"
+        style="margin-top:.75rem">
+    {% csrf_token %}
+
+    <!-- 全局非字段错误（一般用不到） -->
+    {{ note_form.non_field_errors }}
+
+    <label>Note</label>
+    {{ note_form.body }}
+    {% if note_form.body.errors %}
+      <small style="color:#c1121f">{{ note_form.body.errors|striptags }}</small>
+    {% endif %}
+
+    <div class="grid" style="align-items:end">
+      <div>
+        <label>Name</label>
+        {{ note_form.author_name }}
+        {% if note_form.author_name.errors %}
+          <small style="color:#c1121f">{{ note_form.author_name.errors|striptags }}</small>
+        {% endif %}
+      </div>
+      <div class="align-right">
+        <button type="submit">Add Note</button>
+      </div>
+    </div>
+  </form>
+</article>

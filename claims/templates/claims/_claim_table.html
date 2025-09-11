@@ -1,0 +1,93 @@
+{% load humanize %}
+
+<table role="grid" class="claims-table">
+  <thead>
+    <tr>
+      <th>Claim ID</th>
+      <th>Patient</th>
+      <th>Billed</th>
+      <th>Paid</th>
+      <th>Status</th>
+      <th>Insurer</th>
+      <th>Discharge Date</th>
+      <th style="text-align:left">Actions</th>
+    </tr>
+  </thead>
+
+  <tbody>
+  {% for c in claims %}
+    <tr>
+      <td>
+        <a class="claim-id" href="#"
+           hx-get="{% url 'claims:detail' c.pk %}"
+           hx-target="#detail-panel" hx-swap="innerHTML">{{ c.claim_id }}</a>
+      </td>
+
+      <td>{{ c.patient_name }}</td>
+
+      <td class="money">${{ c.billed_amount|floatformat:2|intcomma }}</td>
+
+      <td class="money {% if c.paid_amount|floatformat:2 != '0.00' %}pos{% else %}neg{% endif %}">
+        ${{ c.paid_amount|floatformat:2|intcomma }}
+      </td>
+
+      <td><span class="status-pill {{ c.status }}">{{ c.get_status_display }}</span></td>
+
+      <td class="insurer"><span title="{{ c.insurer }}">{{ c.insurer }}</span></td>
+
+      <td class="date">{% if c.discharge_date %}{{ c.discharge_date|date:"n/j/Y" }}{% endif %}</td>
+
+      <td>
+        <div class="row-actions">
+          <button class="btn-view"
+                  hx-get="{% url 'claims:detail' c.pk %}"
+                  hx-target="#detail-panel"
+                  hx-swap="innerHTML" title="View">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                 fill="none" stroke="currentColor" stroke-width="1.75"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M1 8s3-5 7-5 7 5 7 5-3 5-7 5-7-5-7-5Z"/>
+              <circle cx="8" cy="8" r="2.5"/>
+            </svg>
+            <span>View</span>
+          </button>
+
+          <div id="flag-btn-{{ c.pk }}">
+            {% include "claims/_flag_button.html" with claim=c %}
+          </div>
+        </div>
+      </td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="8" style="text-align:center; padding:1rem">No results.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+{# —— 仅在 HTMX 请求时，输出“越界替换”的外部分页 —— #}
+{% if is_htmx %}
+  <div id="pager" hx-swap-oob="true"
+       style="margin:.6rem 0 0; display:flex; justify-content:center; gap:.6rem; align-items:center">
+    {% with q=request.GET.q|default:'' s=request.GET.status|default:'' d=request.GET.date|default:'newest' %}
+      {% if page_obj.has_previous %}
+        <a class="contrast"
+           hx-get="{% url 'claims:index' %}?page={{ page_obj.previous_page_number }}&q={{ q }}&status={{ s }}&date={{ d }}"
+           hx-target="#claims-table" hx-swap="innerHTML" hx-push-url="true"
+           hx-include="#filters-form,#search-input">‹ Prev</a>
+      {% else %}
+        <span style="opacity:.5">‹ Prev</span>
+      {% endif %}
+
+      <span>Page {{ page_obj.number }} / {{ paginator.num_pages }}</span>
+
+      {% if page_obj.has_next %}
+        <a class="contrast"
+           hx-get="{% url 'claims:index' %}?page={{ page_obj.next_page_number }}&q={{ q }}&status={{ s }}&date={{ d }}"
+           hx-target="#claims-table" hx-swap="innerHTML" hx-push-url="true"
+           hx-include="#filters-form,#search-input">Next ›</a>
+      {% else %}
+        <span style="opacity:.5">Next ›</span>
+      {% endif %}
+    {% endwith %}
+  </div>
+{% endif %}

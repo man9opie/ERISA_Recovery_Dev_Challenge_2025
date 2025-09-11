@@ -1,0 +1,26 @@
+{# claims/templates/claims/_confirm_review.html #}
+<div id="modal-backdrop" class="modal-backdrop"
+     onclick="document.getElementById('modal').innerHTML=''"></div>
+
+<div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="revTitle">
+  <h4 id="revTitle" style="margin:0 0 .5rem 0;">Mark this claim for review?</h4>
+  <p style="margin:.25rem 0 .75rem 0;">
+    Claim <strong>#{{ claim.id }}</strong> – {{ claim.patient_name }}
+  </p>
+
+<form
+  hx-post="{% url 'claims:flag_set' claim.pk %}"
+  hx-target="#flag-btn-{{ claim.pk }}"
+  hx-swap="innerHTML"
+  hx-disabled-elt="button[type=submit]"
+>
+  {% csrf_token %}
+  <div class="actions" style="display:flex;justify-content:flex-end;gap:.5rem;">
+    <button type="button" class="secondary"
+            onclick="document.getElementById('modal').innerHTML=''">Cancel</button>
+    <button type="submit" class="primary">Yes</button>
+  </div>
+</form>
+
+
+</div>

@@ -1,0 +1,16 @@
+<tr hx-get="{% url 'claims:detail' c.pk %}"
+    hx-target="#detail-panel" hx-swap="innerHTML">
+  <td>
+    <a href="#"
+       hx-get="{% url 'claims:detail' c.pk %}"
+       hx-target="#detail-panel" hx-swap="innerHTML">
+      {{ c.claim_id }}
+    </a>
+  </td>
+  <td>{{ c.patient_name }}</td>
+  <td>${{ c.billed_amount }}</td>
+  <td>${{ c.paid_amount }}</td>
+  <td><span class="badge {{ c.status }}">{{ c.get_status_display }}</span></td>
+  <td>{{ c.insurer }}</td>
+  <td id="flag-btn-{{ c.pk }}">{% include 'claims/_flag_button.html' with claim=c %}</td>
+</tr>

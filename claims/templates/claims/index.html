@@ -1,0 +1,111 @@
+{% extends "claims/base.html" %}
+{% block title %}Claims – Demo{% endblock %}
+
+{% block content %}
+<h3>Claims Management System – Demo</h3>
+
+<div class="filters-row">
+  <!-- 搜索：实时查询；把筛选表单一起提交 -->
+  <input id="search-input" type="search" name="q"
+         placeholder="Search Claim ID / Patient / Insurer…"
+         value="{{ request.GET.q }}"
+         hx-get="{% url 'claims:index' %}"
+         hx-trigger="keyup changed delay:300ms, search"
+         hx-target="#claims-table"
+         hx-push-url="true"
+         hx-include="#filters-form" />
+
+  <!-- 组合 Filter（按钮 + 弹出面板） -->
+  <div class="filter-wrap" x-data="{ open: false }">
+    <button type="button" class="btn-filter" @click="open=!open">
+      Filter
+      {% with s=request.GET.status d=request.GET.date|default:'newest' %}
+        {% if s or d != 'newest' %}<span class="dot"></span>{% endif %}
+      {% endwith %}
+    </button>
+
+    <!-- 弹出面板：只在点 Apply 时提交；Clear 只复位，不提交 -->
+    <div class="filter-panel" x-cloak x-show="open" x-transition @click.outside="open=false">
+      <form id="filters-form"
+            hx-get="{% url 'claims:index' %}"
+            hx-target="#claims-table"
+            hx-push-url="true"
+            hx-swap="innerHTML"
+            hx-include="#search-input">
+
+        <fieldset>
+          <legend>Status</legend>
+          {% with s=request.GET.status %}
+          <select name="status" aria-label="Status">
+            <option value="" {% if not s %}selected{% endif %}>All statuses</option>
+            <option value="denied" {% if s == 'denied' %}selected{% endif %}>Denied</option>
+            <option value="paid" {% if s == 'paid' %}selected{% endif %}>Paid</option>
+            <option value="under_review" {% if s == 'under_review' %}selected{% endif %}>Under Review</option>
+          </select>
+          {% endwith %}
+        </fieldset>
+
+        <fieldset>
+          <legend>Date order</legend>
+          {% with d=request.GET.date|default:"newest" %}
+          <label class="radio">
+            <input type="radio" name="date" value="newest" {% if d == 'newest' %}checked{% endif %}>
+            Newest first
+          </label>
+          <label class="radio">
+            <input type="radio" name="date" value="oldest" {% if d == 'oldest' %}checked{% endif %}>
+            Oldest first
+          </label>
+          {% endwith %}
+        </fieldset>
+
+        <div class="panel-actions">
+          <button type="reset" class="secondary">Clear</button>
+          <button type="submit" class="primary" @click="open=false">Apply</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- 表格容器：每次 HTMX 更新后滚到顶部 -->
+<!-- 表格卡片容器 -->
+<div class="table-card">
+  <!-- 表格容器：保留原来的 id 和 htmx 行为 -->
+  <section class="table-scroll" id="claims-table"
+           hx-on::after-settle="this.scrollTo({ top: 0, behavior: 'smooth' })"
+           style="position:relative">
+    {% include "claims/_claim_table.html" with claims=claims %}
+  </section>
+</div>
+
+
+<!-- 分页放在 table 容器外部；由 OOB 响应同步更新 -->
+<div id="pager" style="margin:.6rem 0 0; display:flex; justify-content:center; gap:.6rem; align-items:center">
+  {% with q=request.GET.q|default:'' s=request.GET.status|default:'' d=request.GET.date|default:'newest' %}
+    {% if page_obj.has_previous %}
+      <a class="contrast"
+         hx-get="{% url 'claims:index' %}?page={{ page_obj.previous_page_number }}&q={{ q }}&status={{ s }}&date={{ d }}"
+         hx-target="#claims-table" hx-swap="innerHTML" hx-push-url="true"
+         hx-include="#filters-form,#search-input">‹ Prev</a>
+    {% else %}
+      <span style="opacity:.5">‹ Prev</span>
+    {% endif %}
+
+    <span>Page {{ page_obj.number }} / {{ paginator.num_pages }}</span>
+
+    {% if page_obj.has_next %}
+      <a class="contrast"
+         hx-get="{% url 'claims:index' %}?page={{ page_obj.next_page_number }}&q={{ q }}&status={{ s }}&date={{ d }}"
+         hx-target="#claims-table" hx-swap="innerHTML" hx-push-url="true"
+         hx-include="#filters-form,#search-input">Next ›</a>
+    {% else %}
+      <span style="opacity:.5">Next ›</span>
+    {% endif %}
+  {% endwith %}
+</div>
+
+<div id="detail-panel" style="margin-top:1rem">
+  <em>Select a claim to view details…</em>
+</div>
+{% endblock %}

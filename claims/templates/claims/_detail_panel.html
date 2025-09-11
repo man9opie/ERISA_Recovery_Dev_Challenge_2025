@@ -1,0 +1,107 @@
+{% load humanize %}
+
+<div class="detail-layout">
+  <!-- 左侧：Claim 详情卡片 -->
+  <article class="detail-card">
+    <header>
+      <div class="detail-title">
+        <span>📄</span>
+        <span>Claim Details - {{ claim.claim_id }}</span>
+      </div>
+      <span class="status-pill {{ claim.status }}">{{ claim.get_status_display }}</span>
+    </header>
+
+    <!-- 两列关键信息 -->
+    <div class="detail-grid">
+      <!-- 左列 -->
+      <div>
+        <p class="stat">
+          <span class="label">Patient:</span><br>
+          <b>{{ claim.patient_name }}</b>
+        </p>
+        <p class="stat">
+          <span class="label">Billed Amount:</span><br>
+          <span class="value">${{ claim.billed_amount|floatformat:2|intcomma }}</span>
+        </p>
+        {% comment %} CPT 移到居中行，这里不再显示 {% endcomment %}
+      </div>
+
+      <!-- 右列 -->
+      <div>
+        <p class="stat">
+          <span class="label">Discharge Date:</span><br>
+          <b>{{ claim.discharge_date|date:"m/d/Y" }}</b>
+        </p>
+        <p class="stat">
+          <span class="label">Paid Amount:</span><br>
+          <span class="value">${{ claim.paid_amount|floatformat:2|intcomma }}</span>
+        </p>
+      </div>
+    </div>
+
+    <!-- 居中：Insurer 与 CPT Codes 同一行 -->
+    <!-- 居中：Insurer 单独一行 -->
+    <div class="center-line">
+      <span class="label">Insurer:</span>
+      <b>{{ claim.insurer|default:"—" }}</b>
+    </div>
+
+    <!-- 居中：CPT 单独一行 -->
+    <div class="center-line">
+      <span class="label">CPT:</span>
+      <div class="chips">
+        {% for code in claim.cpt_codes %}
+          <span class="chip">{{ code }}</span>
+        {% empty %}
+          <span class="chip">—</span>
+        {% endfor %}
+      </div>
+    </div>
+
+
+   {% if claim.status == 'denied' and claim.denial_reason %}
+      <p class="stat denial-block" style="margin-top: 1.75rem;">
+        <span class="label">Denial Reason:</span><br>
+        <span class="denial-text">{{ claim.denial_reason }}</span>
+      </p>
+    {% endif %}
+
+
+  </article>
+
+  <!-- 右侧：Notes 卡片 -->
+  <article class="notes-card" id="notes-card">
+    <header><strong>Notes &amp; Annotations</strong></header>
+
+    <!-- 列表（内部滚动） -->
+    <div id="notes-list" class="notes-list">
+      {% include "claims/_notes_list.html" with claim=claim %}
+    </div>
+
+    <!-- 提交后整体替换卡片：成功清空表单，失败显示错误 -->
+    <form hx-post="{% url 'claims:add_note' claim.pk %}"
+          hx-target="#notes-card" hx-swap="outerHTML"
+          style="margin-top:.75rem">
+      {% csrf_token %}
+
+      <label>Note</label>
+      {{ note_form.body }}
+      {% if note_form.body.errors %}
+        <small style="color:#c1121f">{{ note_form.body.errors|striptags }}</small>
+      {% endif %}
+
+      <div class="grid" style="align-items:end">
+        <div>
+          <label>Name</label>
+          {{ note_form.author_name }}
+          {% if note_form.author_name.errors %}
+            <small style="color:#c1121f">{{ note_form.author_name.errors|striptags }}</small>
+          {% endif %}
+        </div>
+        <div class="align-right">
+          <button type="submit">Add Note</button>
+        </div>
+      </div>
+    </form>
+  </article>
+</div>

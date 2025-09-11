@@ -1,0 +1,38 @@
+# Python / Django
+__pycache__/
+*.py[cod]
+*.pyc
+*.pyo
+*.pyd
+*.log
+*.pot
+*.mo
+
+# Virtualenv
+.venv/
+env/
+venv/
+
+# Django
+db.sqlite3
+media/
+staticfiles/
+
+# Local settings / secrets
+.env
+*.secret
+*.key
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# pytest / coverage (如有)
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node (若引入前端构建)
+node_modules/
