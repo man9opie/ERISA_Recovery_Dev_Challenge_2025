@@ -231,6 +231,130 @@
     background:#fff; border:1px solid #e5e7eb; border-radius:10px;
     box-shadow:0 10px 30px rgba(0,0,0,.15); padding:1rem;
   }
+      /* Notes 卡片与 Quick Actions 的样式 */
+.notes-card .notes-list { margin-bottom:.5rem; }
+
+.quick-actions{
+  margin-top:.75rem;
+  border-top:1px solid #eef1f4;
+  padding-top:.75rem;
+  display:flex;
+  flex-direction:column;
+  gap:.5rem;
+}
+.qa-btn{
+  display:flex;
+  align-items:center;
+  gap:.5rem;
+  width:100%;
+  padding:.6rem .8rem;
+  border:1px solid #e5e7eb;
+  background:#fff;
+  border-radius:.5rem;
+  cursor:pointer;
+}
+.qa-btn[disabled]{ opacity:.6; cursor:not-allowed; }
+.qa-btn:hover{ background:#f8fafc; }
+.qa-btn svg{ flex:0 0 16px; }
+
+      /* Quick Actions 按钮的文字颜色强制为深灰 */
+button.qa-btn{
+  color:#374151 !important;        /* 深灰 */
+  background:#fff;
+}
+button.qa-btn *{
+  color:inherit;                    /* 图标/文字继承同色 */
+}
+/* ===== Quick Actions 按钮（与右侧示例一致风格） ===== */
+.quick-actions{
+  display: grid;
+  gap: .75rem;
+}
+
+.qa-btn{
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .9rem 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: .75rem;
+  background: #fff;
+  color: #111827;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+.qa-btn:hover{
+  background: #f8fafc;                    /* 浅灰悬停 */
+  border-color: #e2e8f0;
+  box-shadow: 0 1px 0 rgba(0,0,0,.03);
+}
+.qa-btn[disabled]{
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+/* 小方框图标容器 */
+.qa-icon{
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: .5rem;                   /* 圆角方块 */
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+}
+/* 图标统一尺寸与色值（与示例一致的中性灰） */
+.qa-icon svg{
+  width: 16px;
+  height: 16px;
+  stroke: #667085;
+}
+.detail-block{
+  margin-top: 1rem;
+  text-align: center;
+}
+.detail-block .label{
+  font-size: .9rem;
+  color: #6b7280;
+  margin-bottom: .35rem;
+}
+.detail-block .value{
+  font-weight: 600;
+}
+
+      /* ---- Stack insurer / CPT / denial vertically in detail card ---- */
+.detail-card .center-line{
+  display: block !important;      /* 关键：从 flex 改成 block */
+  text-align: center;
+  margin-top: 1rem;
+}
+.detail-card .center-line .label{
+  display: block;                 /* 标签独占一行 */
+  font-size: .9rem;
+  color: #6b7280;
+  margin-bottom: .35rem;
+}
+.detail-card .center-line .chips{
+  display: flex;                  /* CPT 胶囊横向排列，但整块居中 */
+  justify-content: center;
+  gap: .4rem;
+  flex-wrap: wrap;
+  margin: .1rem 0 0 0;
+}
+.detail-card .center-line .chip{
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  padding: .15rem .55rem;
+  font-size: .85rem;
+}
+.detail-card .denial-text{
+  color: #c1121f;
+  font-weight: 600;
+}
+
   </style>
 </head>
 
@@ -297,6 +421,20 @@
     if (modal) modal.innerHTML = '';
   });
 })();
+
+
+document.body.addEventListener('htmx:configRequest', function (e) {
+  // 优先从离触发点最近的表单里取 token
+  const form = e.target.closest && e.target.closest('form');
+  let token = form && form.querySelector('input[name=csrfmiddlewaretoken]')?.value;
+  if (!token) {
+    const m = document.cookie.match(/csrftoken=([^;]+)/);
+    if (m) token = m[1];
+  }
+  if (token) e.detail.headers['X-CSRFToken'] = token;
+});
+
+
 </script>
 
 </body>
