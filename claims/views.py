@@ -210,32 +210,35 @@ def add_note(request, pk):
 
 
 # ---------- Flag (Review) ----------
+from django.views.decorators.http import require_POST
+import json
 
-from django.shortcuts import get_object_or_404, render, redirect
-from .models import Claim
+def _is_under_review(claim) -> bool:
+    status_norm = ((claim.status or "").strip().lower().replace(" ", "_"))
+    return bool(getattr(claim, "need_review", False))
 
-def _already_under_review(claim: "Claim") -> bool:
-    # 同时兼容字段值大小写/空白
-    status = (getattr(claim, "status", "") or "").strip().lower()
-    return (
-        bool(getattr(claim, "flagged_for_review", False)) or
-        status in {"under review", "under_review", "review"}
-    )
-
+@require_http_methods(["GET"])
 def flag_confirm(request, pk: int):
     claim = get_object_or_404(Claim, pk=pk)
-    if _already_under_review(claim):
-        # 已经在复核流程里：返回“已提交”弹窗
+    if _is_under_review(claim):
+        # 已在审核：弹“已经请求过审核”的小片段
         return render(request, "claims/_already_review.html", {"claim": claim})
-    # 否则返回“确认提交”弹窗
+    # 未在审核：弹确认对话框
     return render(request, "claims/_confirm_review.html", {"claim": claim})
 
+@require_POST
 def flag_set(request, pk: int):
     claim = get_object_or_404(Claim, pk=pk)
-    # 标记为需要复核；如果你希望顺带把状态改为 Under Review，也可以一起设
-    claim.flagged_for_review = True
-    if (getattr(claim, "status", "") or "").strip() == "":
-        claim.status = "Under Review"
-    claim.save()
-    # 返回更新后的按钮（或给出一个toast），这里复用按钮局部
-    return render(request, "claims/_flag_button.html", {"claim": claim})
+    # 只要不是审核中，就置位 need_review，并把 status 规范成 under_review
+    if not _is_under_review(claim):
+        claim.need_review = True
+        status_norm = ((claim.status or "").strip().lower().replace(" ", "_"))
+        if status_norm != "under_review":
+            claim.status = "Under Review"
+        claim.save(update_fields=["need_review", "status"])
+
+    # 返回“旗帜按钮片段”，并触发关闭弹窗事件
+    resp = render(request, "claims/_flag_button.html", {"claim": claim})
+    resp["HX-Trigger"] = json.dumps({"close-modal": True})
+    return resp
+
