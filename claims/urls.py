@@ -7,10 +7,8 @@ urlpatterns = [
     path("welcome/", views.welcome, name="welcome"),
     path("user/", views.index, name="index"),
 
-    # 规范的新名字
     path("claim/<int:pk>/", views.claim_detail, name="claim_detail"),
 
-    # 兼容旧模板里用到的名字（新增这一行）
     path("detail/<int:pk>/", views.claim_detail, name="detail"),
 
     path("dashboard/", views.admin_dashboard, name="admin_dashboard"),

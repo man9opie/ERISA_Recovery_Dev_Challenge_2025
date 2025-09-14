@@ -5,7 +5,7 @@
 <h3>Claims Management System – Demo</h3>
 
 <div class="filters-row">
-  <!-- 搜索：实时查询；把筛选表单一起提交 -->
+  <!-- Real time Search -->
   <input id="search-input" type="search" name="q"
          placeholder="Search Claim ID / Patient / Insurer…"
          value="{{ request.GET.q }}"
@@ -15,7 +15,7 @@
          hx-push-url="true"
          hx-include="#filters-form" />
 
-  <!-- 组合 Filter（按钮 + 弹出面板） -->
+  <!--  Filter -->
   <div class="filter-wrap" x-data="{ open: false }">
     <button type="button" class="btn-filter" @click="open=!open">
       Filter
@@ -24,7 +24,7 @@
       {% endwith %}
     </button>
 
-    <!-- 弹出面板：只在点 Apply 时提交；Clear 只复位，不提交 -->
+
     <div class="filter-panel" x-cloak x-show="open" x-transition @click.outside="open=false">
       <form id="filters-form"
             hx-get="{% url 'claims:index' %}"
@@ -68,10 +68,10 @@
   </div>
 </div>
 
-<!-- 表格容器：每次 HTMX 更新后滚到顶部 -->
-<!-- 表格卡片容器 -->
+<!-- grid container -->
+
 <div class="table-card">
-  <!-- 表格容器：保留原来的 id 和 htmx 行为 -->
+
   <section class="table-scroll" id="claims-table"
            hx-on::after-settle="this.scrollTo({ top: 0, behavior: 'smooth' })"
            style="position:relative">
@@ -80,7 +80,7 @@
 </div>
 
 
-<!-- 分页放在 table 容器外部；由 OOB 响应同步更新 -->
+
 <div id="pager" style="margin:.6rem 0 0; display:flex; justify-content:center; gap:.6rem; align-items:center">
   {% with q=request.GET.q|default:'' s=request.GET.status|default:'' d=request.GET.date|default:'newest' %}
     {% if page_obj.has_previous %}

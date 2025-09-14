@@ -11,13 +11,14 @@ from django.contrib.auth import logout
 
 from .models import Claim
 from .forms import NoteForm
+from django.views.decorators.http import require_POST
+
 
 PAGE_SIZE = 50
 
 
 # ---------- Helpers to extract info from detail_info ----------
 def _extract_cpt_list(info):
-    """从 detail_info 里尽最大可能取出 CPT 列表，兼容多种 key 和字符串分隔"""
     if not isinstance(info, dict):
         return []
     low = { (k or "").strip().lower(): v for k, v in info.items() }
@@ -52,7 +53,6 @@ def _extract_cpt_list(info):
 
 
 def _extract_insurer(claim, info):
-    """优先 claim.insurer；其次从 detail_info 里找"""
     if getattr(claim, "insurer", ""):
         return claim.insurer
     if not isinstance(info, dict):
@@ -79,7 +79,6 @@ def welcome(request):
 
 @require_http_methods(["GET"])
 def continue_as_guest(request):
-    """访客进入用户页（就是列表页）"""
     return redirect("claims:index")
 
 
@@ -92,10 +91,6 @@ def logout_view(request):
 # ---------- Admin dashboard ----------
 @require_http_methods(["GET"])
 def admin_dashboard(request):
-    """
-    展示：所有 need_review=True 的 claims 列表，
-    以及平均 underpayment（billed - paid 的正值平均）。
-    """
     # underpayment = max(billed - paid, 0)
     underpay_expr = Case(
         When(billed_amount__gt=F("paid_amount"),
@@ -131,7 +126,6 @@ def index(request):
 
     qs = Claim.objects.all()
 
-    # 多词 AND 搜索：Claim ID / Patient / Insurer
     if q:
         for token in q.split():
             qs = qs.filter(
@@ -140,17 +134,14 @@ def index(request):
                 Q(insurer__icontains=token)
             )
 
-    # 状态过滤
     if status in {"denied", "paid", "under_review"}:
         qs = qs.filter(status=status)
 
-    # 日期排序（兼容空值）
     if date_order == "oldest":
         qs = qs.order_by(F("discharge_date").asc(nulls_first=True), "created_at")
     else:
         qs = qs.order_by(F("discharge_date").desc(nulls_last=True), "-created_at")
 
-    # 表格需要字段
     qs = qs.only(
         "id", "claim_id", "patient_name",
         "billed_amount", "paid_amount",
@@ -187,7 +178,6 @@ def claim_detail(request, pk):
         "cpt_list": _extract_cpt_list(info),
         "denial_text": _extract_denial(claim, info),
     }
-    # 注意：模板名按你项目里现有的来；如果你的文件名是 _detail_panel.html，请对应替换
     return render(request, "claims/_detail_panel.html", ctx)
 
 
@@ -200,18 +190,14 @@ def add_note(request, pk):
         note = form.save(commit=False)
         note.claim = claim
         note.save()
-        # 成功后只回 notes 列表片段（通常是 claims/_notes_list.html）
         return render(request, "claims/_notes_list.html", {"claim": claim})
 
-    # 校验失败也回列表（或回表单），状态 400 便于前端处理
     resp = render(request, "claims/_notes_list.html", {"claim": claim})
     resp.status_code = 400
     return resp
 
 
 # ---------- Flag (Review) ----------
-from django.views.decorators.http import require_POST
-import json
 
 def _is_under_review(claim) -> bool:
     status_norm = ((claim.status or "").strip().lower().replace(" ", "_"))
@@ -229,7 +215,6 @@ def flag_confirm(request, pk: int):
 @require_POST
 def flag_set(request, pk: int):
     claim = get_object_or_404(Claim, pk=pk)
-    # 只要不是审核中，就置位 need_review，并把 status 规范成 under_review
     if not _is_under_review(claim):
         claim.need_review = True
         status_norm = ((claim.status or "").strip().lower().replace(" ", "_"))
@@ -237,7 +222,6 @@ def flag_set(request, pk: int):
             claim.status = "Under Review"
         claim.save(update_fields=["need_review", "status"])
 
-    # 返回“旗帜按钮片段”，并触发关闭弹窗事件
     resp = render(request, "claims/_flag_button.html", {"claim": claim})
     resp["HX-Trigger"] = json.dumps({"close-modal": True})
     return resp

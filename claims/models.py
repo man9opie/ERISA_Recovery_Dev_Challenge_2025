@@ -46,7 +46,6 @@ class Note(models.Model):
 
     @property
     def ago_one_unit(self):
-        """只显示最大时间单位：2 days ago / 3 hours ago / 15 minutes ago / 10 seconds ago"""
         dt = self.created_at
         if timezone.is_aware(dt):
             dt = timezone.localtime(dt)

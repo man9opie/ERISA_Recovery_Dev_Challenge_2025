@@ -12,6 +12,5 @@ class NoteForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # 双保险：即使有人去掉 HTML 的 required，也会被服务端拦住
         self.fields["body"].required = True
         self.fields["author_name"].required = True

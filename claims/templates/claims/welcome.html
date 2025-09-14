@@ -9,13 +9,13 @@
   </p>
 
   <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px,1fr)); gap:1rem;">
-    <!-- 普通用户页（列表页） -->
+
     <a href="{% url 'claims:index' %}" class="detail-card" style="text-decoration:none; display:block; padding:1.25rem;">
       <h3 style="margin:.25rem 0 0 0;">User Page</h3>
       <p style="color:#6b7280; margin:.25rem 0 0 0;">Browse and review claims.</p>
     </a>
 
-    <!-- 管理员页（Dashboard） -->
+
     <a href="{% url 'claims:admin_dashboard' %}" class="detail-card" style="text-decoration:none; display:block; padding:1.25rem;">
       <h3 style="margin:.25rem 0 0 0;">Admin Page</h3>
       <p style="color:#6b7280; margin:.25rem 0 0 0;">See flagged claims and underpayment stats.</p>

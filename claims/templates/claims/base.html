@@ -5,28 +5,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{% block title %}Claims Demo{% endblock %}</title>
 
-  <!-- UI 基础 -->
+  <!-- UI  -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
-  <!-- 行为 -->
+  <!-- Behavior -->
   <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
   <script src="https://unpkg.com/alpinejs@3.x.x" defer></script>
 
   <style>
   /* =======================
-     CSS Variables（统一调色/尺寸）
+     CSS Variables
      ======================= */
   :root{
-    /* 卡片与表格 */
+    /* card and grid */
     --card-radius: 12px;
     --card-border: #e6ebf1;
-    --thead-bg: #f5f7fb;             /* 表头浅灰 */
-    --table-max-h: 460px;            /* 表格可视最大高度 */
+    --thead-bg: #f5f7fb;
+    --table-max-h: 460px;
 
     /* Notes */
     --note-row-h: 5rem;
     --note-gap: .5rem;
 
-    /* 间距 */
+    /* space */
     --center-gap: 1.25rem;
   }
 
@@ -40,13 +40,13 @@
     overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
   }
 
-  /* htmx 加载指示器 */
+  /* htmx loader */
   .htmx-indicator{ display:none; opacity:0; transition:opacity .2s ease; }
   .htmx-request .htmx-indicator,
   .htmx-indicator.htmx-request{ display:inline-block; opacity:1; }
 
   /* =======================
-     卡片：Detail / Table
+     Card：Detail / Table
      ======================= */
   .detail-layout{ display:grid; grid-template-columns:1.35fr 1fr; gap:1rem; }
 
@@ -66,7 +66,7 @@
   .detail-title{ display:flex; align-items:center; gap:.5rem; font-weight:600; }
 
   /* =======================
-     表格（含 sticky 表头）
+    Grid
      ======================= */
   .table-card .table-scroll{ max-height:var(--table-max-h); overflow:auto; }
   .table-card table{ border-collapse:separate; border-spacing:0; width:100%; }
@@ -84,17 +84,17 @@
   .table-card tbody tr + tr td{ border-top:1px solid #f2f4f7; }
   .table-card tbody tr:hover{ background:#fafbff; }
 
-  /* Actions 列右对齐 */
+  /* Actions  */
   .claims-table th.actions,
   .claims-table td.actions{ text-align:right !important; }
 
-  /* 保险公司过长时省略号 */
+  /* insur */
   td.insurer span{
     display:inline-block; max-width:180px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
 
   /* =======================
-     组件：状态/金额/徽章
+     status,money
      ======================= */
   .money.pos{ color:#0a7a2f; font-weight:600; }
   .money.neg{ color:#b91c1c; font-weight:600; }
@@ -114,7 +114,7 @@
   .badge.under_review{ background:#e8f0fe; color:#1a3fb0; }
 
   /* =======================
-     Detail 内容块
+     Detail
      ======================= */
   .detail-grid{ display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
   .stat{ text-align:center; }
@@ -137,7 +137,7 @@
   .detail-card hr{ display:none !important; }
 
   /* =======================
-     Notes（最多显示 3 条，超出滚动）
+     Notes
      ======================= */
   .notes-card #notes-list{
     max-height: calc(var(--note-row-h) * 3 + var(--note-gap) * 2) !important;
@@ -151,7 +151,7 @@
   }
 
   /* =======================
-     顶部：搜索 + Filter
+     search + Filter
      ======================= */
   .filters-row{ display:grid; grid-template-columns:1fr auto; gap:.5rem; align-items:center; }
 
@@ -211,7 +211,7 @@
   }
 
   /* =======================
-     分页交互
+     pages
      ======================= */
   #pager a, .pager-nav a{ cursor:pointer !important; }
   #pager a:hover{ text-decoration:underline; }
@@ -231,129 +231,129 @@
     background:#fff; border:1px solid #e5e7eb; border-radius:10px;
     box-shadow:0 10px 30px rgba(0,0,0,.15); padding:1rem;
   }
-      /* Notes 卡片与 Quick Actions 的样式 */
-.notes-card .notes-list { margin-bottom:.5rem; }
 
-.quick-actions{
-  margin-top:.75rem;
-  border-top:1px solid #eef1f4;
-  padding-top:.75rem;
-  display:flex;
-  flex-direction:column;
-  gap:.5rem;
-}
-.qa-btn{
-  display:flex;
-  align-items:center;
-  gap:.5rem;
-  width:100%;
-  padding:.6rem .8rem;
-  border:1px solid #e5e7eb;
-  background:#fff;
-  border-radius:.5rem;
-  cursor:pointer;
-}
-.qa-btn[disabled]{ opacity:.6; cursor:not-allowed; }
-.qa-btn:hover{ background:#f8fafc; }
-.qa-btn svg{ flex:0 0 16px; }
+    .notes-card .notes-list { margin-bottom:.5rem; }
 
-      /* Quick Actions 按钮的文字颜色强制为深灰 */
-button.qa-btn{
-  color:#374151 !important;        /* 深灰 */
-  background:#fff;
-}
-button.qa-btn *{
-  color:inherit;                    /* 图标/文字继承同色 */
-}
-/* ===== Quick Actions 按钮（与右侧示例一致风格） ===== */
-.quick-actions{
-  display: grid;
-  gap: .75rem;
-}
+    .quick-actions{
+      margin-top:.75rem;
+      border-top:1px solid #eef1f4;
+      padding-top:.75rem;
+      display:flex;
+      flex-direction:column;
+      gap:.5rem;
+    }
+    .qa-btn{
+      display:flex;
+      align-items:center;
+      gap:.5rem;
+      width:100%;
+      padding:.6rem .8rem;
+      border:1px solid #e5e7eb;
+      background:#fff;
+      border-radius:.5rem;
+      cursor:pointer;
+    }
+    .qa-btn[disabled]{ opacity:.6; cursor:not-allowed; }
+    .qa-btn:hover{ background:#f8fafc; }
+    .qa-btn svg{ flex:0 0 16px; }
 
-.qa-btn{
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: .75rem;
-  padding: .9rem 1rem;
-  border: 1px solid #e5e7eb;
-  border-radius: .75rem;
-  background: #fff;
-  color: #111827;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background .15s ease, border-color .15s ease, box-shadow .15s ease;
-}
-.qa-btn:hover{
-  background: #f8fafc;                    /* 浅灰悬停 */
-  border-color: #e2e8f0;
-  box-shadow: 0 1px 0 rgba(0,0,0,.03);
-}
-.qa-btn[disabled]{
-  opacity: .55;
-  cursor: not-allowed;
-}
+          /* Quick Actions  */
+    button.qa-btn{
+      color:#374151 !important;
+      background:#fff;
+    }
+    button.qa-btn *{
+      color:inherit;
+    }
+    /* ===== Quick Actions button ===== */
+    .quick-actions{
+      display: grid;
+      gap: .75rem;
+    }
 
-/* 小方框图标容器 */
-.qa-icon{
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  border-radius: .5rem;                   /* 圆角方块 */
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-}
-/* 图标统一尺寸与色值（与示例一致的中性灰） */
-.qa-icon svg{
-  width: 16px;
-  height: 16px;
-  stroke: #667085;
-}
-.detail-block{
-  margin-top: 1rem;
-  text-align: center;
-}
-.detail-block .label{
-  font-size: .9rem;
-  color: #6b7280;
-  margin-bottom: .35rem;
-}
-.detail-block .value{
-  font-weight: 600;
-}
+    .qa-btn{
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      padding: .9rem 1rem;
+      border: 1px solid #e5e7eb;
+      border-radius: .75rem;
+      background: #fff;
+      color: #111827;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background .15s ease, border-color .15s ease, box-shadow .15s ease;
+    }
+    .qa-btn:hover{
+      background: #f8fafc;
+      border-color: #e2e8f0;
+      box-shadow: 0 1px 0 rgba(0,0,0,.03);
+    }
+    .qa-btn[disabled]{
+      opacity: .55;
+      cursor: not-allowed;
+    }
 
-      /* ---- Stack insurer / CPT / denial vertically in detail card ---- */
-.detail-card .center-line{
-  display: block !important;      /* 关键：从 flex 改成 block */
-  text-align: center;
-  margin-top: 1rem;
-}
-.detail-card .center-line .label{
-  display: block;                 /* 标签独占一行 */
-  font-size: .9rem;
-  color: #6b7280;
-  margin-bottom: .35rem;
-}
-.detail-card .center-line .chips{
-  display: flex;                  /* CPT 胶囊横向排列，但整块居中 */
-  justify-content: center;
-  gap: .4rem;
-  flex-wrap: wrap;
-  margin: .1rem 0 0 0;
-}
-.detail-card .center-line .chip{
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
-  border-radius: 999px;
-  padding: .15rem .55rem;
-  font-size: .85rem;
-}
-.detail-card .denial-text{
-  color: #c1121f;
-  font-weight: 600;
-}
+    /* icons */
+    .qa-icon{
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      border-radius: .5rem;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+    }
+
+    .qa-icon svg{
+      width: 16px;
+      height: 16px;
+      stroke: #667085;
+    }
+    .detail-block{
+      margin-top: 1rem;
+      text-align: center;
+    }
+    .detail-block .label{
+      font-size: .9rem;
+      color: #6b7280;
+      margin-bottom: .35rem;
+    }
+    .detail-block .value{
+      font-weight: 600;
+    }
+
+    /* ---- Stack insurer / CPT / denial vertically in detail card ---- */
+    .detail-card .center-line{
+      display: block !important;
+      text-align: center;
+      margin-top: 1rem;
+    }
+    .detail-card .center-line .label{
+      display: block;
+      font-size: .9rem;
+      color: #6b7280;
+      margin-bottom: .35rem;
+    }
+    .detail-card .center-line .chips{
+      display: flex;
+      justify-content: center;
+      gap: .4rem;
+      flex-wrap: wrap;
+      margin: .1rem 0 0 0;
+    }
+    .detail-card .center-line .chip{
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 999px;
+      padding: .15rem .55rem;
+      font-size: .85rem;
+    }
+    .detail-card .denial-text{
+      color: #c1121f;
+      font-weight: 600;
+    }
 
   </style>
 </head>
@@ -363,76 +363,73 @@ button.qa-btn *{
     {% block content %}{% endblock %}
   </main>
 
-  <!-- 模态容器：用于装载确认框 -->
   <div id="modal"></div>
 
-  <!-- 仅对红旗确认请求保留滚动位置，避免页面回到顶部 -->
+  <!-- keep the position of the page after flag a claim-->
   <script>
-(function () {
-  // ⚠️ 如果你的表格滚动容器 id 不是 "claims-table"，这里改成实际 id
-  const getScrollBox = () => document.getElementById('claims-table');
+    (function () {
 
-  let lastWinScroll = 0;
-  let lastBoxScroll = null;
+      const getScrollBox = () => document.getElementById('claims-table');
 
-  // 仅对“红旗确认”的请求记录滚动位置
-  document.addEventListener('htmx:beforeRequest', function (ev) {
-    const detail = ev.detail || {};
-    const target = detail.target;      // 将被 swap 的目标（我们设为 #flag-btn-<id>）
-    if (!target || !target.id || !target.id.startsWith('flag-btn-')) return;
+      let lastWinScroll = 0;
+      let lastBoxScroll = null;
 
-    const box = getScrollBox();
-    lastBoxScroll = box ? box.scrollTop : null;
-    lastWinScroll = window.pageYOffset || document.documentElement.scrollTop || 0;
 
-    // 给目标打个标记，方便 afterSettle 恢复时识别
-    target.dataset._restoreScroll = '1';
-  });
+      document.addEventListener('htmx:beforeRequest', function (ev) {
+        const detail = ev.detail || {};
+        const target = detail.target;
+        if (!target || !target.id || !target.id.startsWith('flag-btn-')) return;
 
-  // 等“所有动画/渲染都稳定后”再恢复（afterSettle 比 afterSwap 更晚）
-  document.addEventListener('htmx:afterSettle', function (ev) {
-    const detail = ev.detail || {};
-    const target = detail.target;
-    if (!target || target.dataset._restoreScroll !== '1') return;
+        const box = getScrollBox();
+        lastBoxScroll = box ? box.scrollTop : null;
+        lastWinScroll = window.pageYOffset || document.documentElement.scrollTop || 0;
 
-    const box = getScrollBox();
 
-    // 双 RAF：确保 DOM 完全稳定（包括你关闭 modal 的动作）
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        if (box != null && lastBoxScroll != null) {
-          box.scrollTop = lastBoxScroll;
-        }
-        // 有些浏览器不认 'instant'，这里退回 auto
-        try {
-          window.scrollTo({ top: lastWinScroll, left: 0, behavior: 'auto' });
-        } catch (e) {
-          window.scrollTo(0, lastWinScroll);
-        }
-        // 清理
-        delete target.dataset._restoreScroll;
+        target.dataset._restoreScroll = '1';
       });
+
+
+      document.addEventListener('htmx:afterSettle', function (ev) {
+        const detail = ev.detail || {};
+        const target = detail.target;
+        if (!target || target.dataset._restoreScroll !== '1') return;
+
+        const box = getScrollBox();
+
+
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            if (box != null && lastBoxScroll != null) {
+              box.scrollTop = lastBoxScroll;
+            }
+            try {
+              window.scrollTo({ top: lastWinScroll, left: 0, behavior: 'auto' });
+            } catch (e) {
+              window.scrollTo(0, lastWinScroll);
+            }
+
+            delete target.dataset._restoreScroll;
+          });
+        });
+      });
+
+      document.body.addEventListener('close-modal', function () {
+        const modal = document.getElementById('modal');
+        if (modal) modal.innerHTML = '';
+      });
+    })();
+
+
+    document.body.addEventListener('htmx:configRequest', function (e) {
+
+      const form = e.target.closest && e.target.closest('form');
+      let token = form && form.querySelector('input[name=csrfmiddlewaretoken]')?.value;
+      if (!token) {
+        const m = document.cookie.match(/csrftoken=([^;]+)/);
+        if (m) token = m[1];
+      }
+      if (token) e.detail.headers['X-CSRFToken'] = token;
     });
-  });
-
-  // 兜底：后端 HX-Trigger 发出的 close-modal 事件，确保能关弹窗
-  document.body.addEventListener('close-modal', function () {
-    const modal = document.getElementById('modal');
-    if (modal) modal.innerHTML = '';
-  });
-})();
-
-
-document.body.addEventListener('htmx:configRequest', function (e) {
-  // 优先从离触发点最近的表单里取 token
-  const form = e.target.closest && e.target.closest('form');
-  let token = form && form.querySelector('input[name=csrfmiddlewaretoken]')?.value;
-  if (!token) {
-    const m = document.cookie.match(/csrftoken=([^;]+)/);
-    if (m) token = m[1];
-  }
-  if (token) e.detail.headers['X-CSRFToken'] = token;
-});
 
 
 </script>

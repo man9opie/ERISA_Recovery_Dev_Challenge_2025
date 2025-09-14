@@ -250,7 +250,7 @@ class Command(BaseCommand):
                     will_create += 1
             self.stdout.write(self.style.NOTICE(f"[Dry-run] Rows: {len(normalized_rows)}"))
             self.stdout.write(self.style.NOTICE(f"[Dry-run] Create: {will_create}, Update: {will_update}"))
-            # 备注/need_review 清理也只提示
+
             if reset_notes:
                 self.stdout.write(self.style.NOTICE(f"[Dry-run] Would reset notes: {reset_notes}"))
             if reset_needreview:

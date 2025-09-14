@@ -64,7 +64,7 @@
   </tbody>
 </table>
 
-{# —— 仅在 HTMX 请求时，输出“越界替换”的外部分页 —— #}
+
 {% if is_htmx %}
   <div id="pager" hx-swap-oob="true"
        style="margin:.6rem 0 0; display:flex; justify-content:center; gap:.6rem; align-items:center">

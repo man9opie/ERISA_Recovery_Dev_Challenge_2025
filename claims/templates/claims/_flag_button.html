@@ -1,10 +1,7 @@
 {# claims/templates/claims/_flag_button.html #}
-{% comment %}
-这个片段渲染在 <div id="flag-btn-{{ claim.pk }}"> … </div> 里面
-{% endcomment %}
 
 {% if claim.need_review %}
-  {# 已加入复核队列：不显示红旗，但保留占位，防止 View 左移 #}
+
   <span class="flag-space" aria-hidden="true"></span>
 {% else %}
   <button class="flag-btn" title="Flag for review"
