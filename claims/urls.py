@@ -14,7 +14,7 @@ urlpatterns = [
     path("detail/<int:pk>/", views.claim_detail, name="detail"),
 
     path("dashboard/", views.admin_dashboard, name="admin_dashboard"),
-    path("flag/confirm/<int:pk>/", views.flag_confirm, name="flag_confirm"),
+    path("claims/<int:pk>/flag/confirm/", views.flag_confirm, name="flag_confirm"),
     path("flag/set/<int:pk>/", views.flag_set, name="flag_set"),
     path("note/add/<int:pk>/", views.add_note, name="add_note"),
 ]

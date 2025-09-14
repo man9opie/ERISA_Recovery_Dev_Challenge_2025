@@ -210,24 +210,32 @@ def add_note(request, pk):
 
 
 # ---------- Flag (Review) ----------
-@require_http_methods(["GET"])
-def flag_confirm(request, pk):
-    """返回确认弹窗片段（HTMX 载入到 #modal）"""
+
+from django.shortcuts import get_object_or_404, render, redirect
+from .models import Claim
+
+def _already_under_review(claim: "Claim") -> bool:
+    # 同时兼容字段值大小写/空白
+    status = (getattr(claim, "status", "") or "").strip().lower()
+    return (
+        bool(getattr(claim, "flagged_for_review", False)) or
+        status in {"under review", "under_review", "review"}
+    )
+
+def flag_confirm(request, pk: int):
     claim = get_object_or_404(Claim, pk=pk)
-    if claim.need_review:
-        # 已标记就直接返回更新后的红旗按钮（也可以返回“已标记”的提示片段）
-        return render(request, "claims/_flag_button.html", {"claim": claim})
+    if _already_under_review(claim):
+        # 已经在复核流程里：返回“已提交”弹窗
+        return render(request, "claims/_already_review.html", {"claim": claim})
+    # 否则返回“确认提交”弹窗
     return render(request, "claims/_confirm_review.html", {"claim": claim})
 
-
-@require_POST
-def flag_set(request, pk):
+def flag_set(request, pk: int):
     claim = get_object_or_404(Claim, pk=pk)
-    if not claim.need_review:
-        claim.need_review = True
-        claim.save(update_fields=["need_review"])
-
-    resp = render(request, "claims/_flag_button.html", {"claim": claim})
-    # 让前端关闭弹窗（和你之前模板中的 JS 对应）
-    resp["HX-Trigger"] = json.dumps({"close-modal": {"id": claim.pk}})
-    return resp
+    # 标记为需要复核；如果你希望顺带把状态改为 Under Review，也可以一起设
+    claim.flagged_for_review = True
+    if (getattr(claim, "status", "") or "").strip() == "":
+        claim.status = "Under Review"
+    claim.save()
+    # 返回更新后的按钮（或给出一个toast），这里复用按钮局部
+    return render(request, "claims/_flag_button.html", {"claim": claim})
