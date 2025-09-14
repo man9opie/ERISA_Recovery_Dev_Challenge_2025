@@ -36,8 +36,8 @@ class Command(BaseCommand):
         )
         parser.add_argument(
             "--reset-notes",
-            choices=["all", "file", "keep"],  # 新增 keep
-            default="all",  # 默认清空全部 notes
+            choices=["all", "file", "keep"],
+            default="all",  # clean all notes
             help="Reset notes before load (default: all). "
                  "Use 'file' to clear only notes of claims present in the file, "
                  "or 'keep' to keep existing notes."
@@ -216,7 +216,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING("No rows found."))
             return
 
-        # 采集本次文件中的 claim_id
+        # Get Claim id
         file_ids: list[str] = []
         normalized_rows: list[tuple[str, dict]] = []
         for r in rows:
@@ -232,12 +232,12 @@ class Command(BaseCommand):
 
         file_id_set = set(file_ids)
 
-        # 准备统计
+
         will_create = 0
         will_update = 0
         skipped = 0
 
-        # 预检测（dry-run 时估算 create/update）
+        # dry run
         if dry_run:
             existing = set(
                 Claim.objects.filter(claim_id__in=file_id_set)
@@ -257,21 +257,20 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.NOTICE(f"[Dry-run] Would reset need_review: {reset_needreview}"))
             return
 
-        # 真正写库：放在一个事务里
+
         with transaction.atomic():
-            # 可选：清理 Notes
+
             if reset_notes == "all":
                 Note.objects.all().delete()
             elif reset_notes == "file":
                 Note.objects.filter(claim__claim_id__in=file_id_set).delete()
 
-            # 可选：重置 need_review
             if reset_needreview == "all":
                 Claim.objects.update(need_review=False)
             elif reset_needreview == "file":
                 Claim.objects.filter(claim_id__in=file_id_set).update(need_review=False)
 
-            # Upsert 主体
+            # Upsert
             for cid, row in normalized_rows:
                 defaults = self._row_to_defaults(row)
                 if not defaults:
@@ -286,7 +285,6 @@ class Command(BaseCommand):
                 else:
                     will_update += 1
 
-        # 总结
         self.stdout.write(self.style.SUCCESS(f"Import done. Rows: {len(normalized_rows)}"))
         self.stdout.write(self.style.SUCCESS(f"Created: {will_create}, Updated: {will_update}, Skipped: {skipped}"))
         if reset_notes:

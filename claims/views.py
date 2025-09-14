@@ -1,33 +1,26 @@
 # claims/views.py
-from __future__ import annotations
-
-import json
 import re
-from typing import List
+import json
+from decimal import Decimal
 
+from django.db.models import Q, F, Case, When, Value, DecimalField, ExpressionWrapper, Avg
 from django.core.paginator import Paginator
-from django.db.models import F, Q
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_http_methods, require_POST
+from django.contrib.auth import logout
 
-from .forms import NoteForm
 from .models import Claim
+from .forms import NoteForm
 
-PAGE_SIZE = 50  # 每页行数，可按需调整
+PAGE_SIZE = 50
 
 
-# ---------------------------
-# helpers：把 detail_info 做容错解析
-# ---------------------------
-def _extract_cpt_list(info) -> List[str]:
-    """
-    从 detail_info 里尽最大可能取出 CPT 列表：
-    - 兼容 key: cpt_codes / cpt / cpts / cpt code / cpt codes / codes
-    - 兼容字符串或列表，字符串支持逗号、空格、分号、竖线等分隔
-    """
+# ---------- Helpers to extract info from detail_info ----------
+def _extract_cpt_list(info):
+    """从 detail_info 里尽最大可能取出 CPT 列表，兼容多种 key 和字符串分隔"""
     if not isinstance(info, dict):
         return []
-    low = {(k or "").strip().lower(): v for k, v in info.items()}
+    low = { (k or "").strip().lower(): v for k, v in info.items() }
 
     candidates = [
         low.get("cpt_codes"),
@@ -39,7 +32,6 @@ def _extract_cpt_list(info) -> List[str]:
     ]
     raw = next((v for v in candidates if v), None)
 
-    # 兜底：任意包含 "cpt" 的 key
     if raw is None:
         for k, v in low.items():
             if "cpt" in k:
@@ -59,46 +51,82 @@ def _extract_cpt_list(info) -> List[str]:
     return []
 
 
-def _extract_insurer(claim: Claim, info) -> str:
-    """优先用 claim.insurer；其次从 detail_info 里找别名。"""
+def _extract_insurer(claim, info):
+    """优先 claim.insurer；其次从 detail_info 里找"""
     if getattr(claim, "insurer", ""):
         return claim.insurer
     if not isinstance(info, dict):
         return ""
-    low = {(k or "").strip().lower(): v for k, v in info.items()}
+    low = { (k or "").strip().lower(): v for k, v in info.items() }
     return low.get("insurer") or low.get("payer") or low.get("insurance") or ""
 
 
-def _extract_denial(info, claim: Claim) -> str:
-    """
-    统一抽取“否认原因”文本：
-    - 兼容 detail_info.denial_reason / detail_info.denial / detail_info.denialreason
-    - 兜底为模型字段 claim.denial_reason（若存在）
-    - 返回字符串，拿不到时返回空串
-    """
+def _extract_denial(claim, info):
+    if getattr(claim, "denial_reason", ""):
+        return claim.denial_reason
     if isinstance(info, dict):
-        low = {(k or "").strip().lower(): v for k, v in info.items()}
-        val = (
-            low.get("denial_reason")
-            or low.get("denial")
-            or low.get("denialreason")
-        )
-        if isinstance(val, (list, tuple)):
-            val = ", ".join(map(str, val))
-        if val:
-            return str(val)
-    return getattr(claim, "denial_reason", "") or ""
+        for key in ("denial_reason", "denial", "denial reason"):
+            if key in {k.lower(): v for k, v in info.items()}:
+                return info.get(key)
+    return ""
 
 
-# ---------------------------
-# 视图
-# ---------------------------
+# ---------- Welcome / guest / logout ----------
+@require_http_methods(["GET"])
+def welcome(request):
+    return render(request, "claims/welcome.html")
+
+
+@require_http_methods(["GET"])
+def continue_as_guest(request):
+    """访客进入用户页（就是列表页）"""
+    return redirect("claims:index")
+
+
+@require_http_methods(["GET"])
+def logout_view(request):
+    logout(request)
+    return redirect("claims:welcome")
+
+
+# ---------- Admin dashboard ----------
+@require_http_methods(["GET"])
+def admin_dashboard(request):
+    """
+    展示：所有 need_review=True 的 claims 列表，
+    以及平均 underpayment（billed - paid 的正值平均）。
+    """
+    # underpayment = max(billed - paid, 0)
+    underpay_expr = Case(
+        When(billed_amount__gt=F("paid_amount"),
+             then=ExpressionWrapper(F("billed_amount") - F("paid_amount"),
+                                    output_field=DecimalField(max_digits=12, decimal_places=2))),
+        default=Value(Decimal("0.00")),
+        output_field=DecimalField(max_digits=12, decimal_places=2)
+    )
+
+    flagged = (Claim.objects
+               .filter(need_review=True)
+               .annotate(underpayment=underpay_expr)
+               .order_by("-created_at"))
+
+    avg_underpay_all = (Claim.objects
+                        .annotate(underpayment=underpay_expr)
+                        .aggregate(avg=Avg("underpayment"))["avg"]) or Decimal("0.00")
+
+    ctx = {
+        "flagged_claims": flagged,
+        "avg_underpay_all": avg_underpay_all,
+    }
+    return render(request, "claims/admin_dashboard.html", ctx)
+
+
+# ---------- User list page ----------
 @require_http_methods(["GET"])
 def index(request):
-    """列表页：搜索 + 过滤 + 排序 + 分页（支持 HTMX 部分刷新）"""
     q = (request.GET.get("q") or "").strip()
     status = (request.GET.get("status") or "").strip()          # "", "denied", "paid", "under_review"
-    date_order = (request.GET.get("date") or "newest").strip()  # "newest" | "oldest"
+    date_order = (request.GET.get("date") or "newest").strip()   # "newest" | "oldest"
     page = request.GET.get("page")
 
     qs = Claim.objects.all()
@@ -107,9 +135,9 @@ def index(request):
     if q:
         for token in q.split():
             qs = qs.filter(
-                Q(claim_id__icontains=token)
-                | Q(patient_name__icontains=token)
-                | Q(insurer__icontains=token)
+                Q(claim_id__icontains=token) |
+                Q(patient_name__icontains=token) |
+                Q(insurer__icontains=token)
             )
 
     # 状态过滤
@@ -122,17 +150,13 @@ def index(request):
     else:
         qs = qs.order_by(F("discharge_date").desc(nulls_last=True), "-created_at")
 
-    # 只取表格需要字段
+    # 表格需要字段
     qs = qs.only(
-        "id",
-        "claim_id",
-        "patient_name",
-        "billed_amount",
-        "paid_amount",
-        "status",
-        "insurer",
-        "discharge_date",
-        "created_at",
+        "id", "claim_id", "patient_name",
+        "billed_amount", "paid_amount",
+        "status", "insurer",
+        "discharge_date", "created_at",
+        "need_review",
     )
 
     paginator = Paginator(qs, PAGE_SIZE)
@@ -145,18 +169,14 @@ def index(request):
         "paginator": paginator,
         "is_htmx": is_htmx,
     }
-
-    # HTMX 请求只返回表格片段
     if is_htmx:
         return render(request, "claims/_claim_table.html", ctx)
-
-    # 首次加载整页
     return render(request, "claims/index.html", ctx)
 
 
+# ---------- Claim detail panel (for HTMX) ----------
 @require_http_methods(["GET"])
-def claim_detail(request, pk: int):
-    """点击 View 加载详情面板（含 Insurer/CPT/Denial 容错解析）"""
+def claim_detail(request, pk):
     claim = get_object_or_404(Claim, pk=pk)
     info = claim.detail_info if isinstance(claim.detail_info, dict) else {}
 
@@ -165,51 +185,49 @@ def claim_detail(request, pk: int):
         "note_form": NoteForm(),
         "insurer_display": _extract_insurer(claim, info),
         "cpt_list": _extract_cpt_list(info),
-        "denial_text": _extract_denial(info, claim),
+        "denial_text": _extract_denial(claim, info),
     }
+    # 注意：模板名按你项目里现有的来；如果你的文件名是 _detail_panel.html，请对应替换
     return render(request, "claims/_detail_panel.html", ctx)
 
 
+# ---------- Notes ----------
 @require_http_methods(["POST"])
-def add_note(request, pk: int):
-    """
-    添加备注，返回 “仅备注列表” 片段（_notes_list.html），
-    以便在 _notes_card.html 中 hx-target 到该列表进行局部刷新。
-    """
+def add_note(request, pk):
     claim = get_object_or_404(Claim, pk=pk)
     form = NoteForm(request.POST)
     if form.is_valid():
         note = form.save(commit=False)
         note.claim = claim
         note.save()
+        # 成功后只回 notes 列表片段（通常是 claims/_notes_list.html）
         return render(request, "claims/_notes_list.html", {"claim": claim})
 
-    # 校验失败也返回列表（附 400），前端可自行处理
+    # 校验失败也回列表（或回表单），状态 400 便于前端处理
     resp = render(request, "claims/_notes_list.html", {"claim": claim})
     resp.status_code = 400
     return resp
 
 
+# ---------- Flag (Review) ----------
+@require_http_methods(["GET"])
 def flag_confirm(request, pk):
-    """点击 'Flag for Review' 时先来这里：
-       - 如果已标记，弹只读提示
-       - 否则，弹确认框
-    """
+    """返回确认弹窗片段（HTMX 载入到 #modal）"""
     claim = get_object_or_404(Claim, pk=pk)
     if claim.need_review:
-        return render(request, "claims/_already_review.html", {"claim": claim})
+        # 已标记就直接返回更新后的红旗按钮（也可以返回“已标记”的提示片段）
+        return render(request, "claims/_flag_button.html", {"claim": claim})
     return render(request, "claims/_confirm_review.html", {"claim": claim})
 
 
 @require_POST
-def flag_set(request, pk: int):
-    """确认后设置 need_review=True，并触发关闭弹窗事件"""
+def flag_set(request, pk):
     claim = get_object_or_404(Claim, pk=pk)
     if not claim.need_review:
         claim.need_review = True
         claim.save(update_fields=["need_review"])
 
-    # 返回更新后的红旗按钮片段，并触发关闭模态框
     resp = render(request, "claims/_flag_button.html", {"claim": claim})
+    # 让前端关闭弹窗（和你之前模板中的 JS 对应）
     resp["HX-Trigger"] = json.dumps({"close-modal": {"id": claim.pk}})
     return resp

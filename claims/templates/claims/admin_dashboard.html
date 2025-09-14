@@ -1,0 +1,53 @@
+{% extends "claims/base.html" %}
+{% load humanize %}
+{% block title %}Admin · Claims Dashboard{% endblock %}
+
+{% block content %}
+<section class="detail-card" style="margin-bottom:1rem;">
+  <h2 style="margin:0 0 .5rem 0;">Admin Dashboard</h2>
+  <div style="color:#6b7280;">Average Underpayment (all claims):
+    <strong>${{ avg_underpay_all|floatformat:2|intcomma }}</strong>
+  </div>
+</section>
+
+<section class="detail-card">
+  <h3 style="margin:0 0 .75rem 0;">Claims Needing Review</h3>
+  {% if flagged_claims %}
+    <div style="overflow:auto;">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Claim ID</th>
+            <th>Patient</th>
+            <th>Insurer</th>
+            <th style="text-align:right;">Billed</th>
+            <th style="text-align:right;">Paid</th>
+            <th style="text-align:right;">Underpayment</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for c in flagged_claims %}
+          <tr>
+            <td>{{ c.claim_id }}</td>
+            <td>{{ c.patient_name }}</td>
+            <td>{{ c.insurer }}</td>
+            <td style="text-align:right;">${{ c.billed_amount|floatformat:2|intcomma }}</td>
+            <td style="text-align:right;">${{ c.paid_amount|floatformat:2|intcomma }}</td>
+            <td style="text-align:right;">${{ c.underpayment|floatformat:2|intcomma }}</td>
+            <td>
+              <a class="btn" hx-get="{% url 'claims:claim_detail' c.pk %}" hx-target="#detail-panel" hx-swap="innerHTML">View</a>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p style="color:#6b7280;">No flagged claims.</p>
+  {% endif %}
+</section>
+
+<!-- 可选：在该页放一个详情容器，供上面 View 按钮 HTMX 加载 -->
+<div id="detail-panel" style="margin-top:1rem;"></div>
+{% endblock %}

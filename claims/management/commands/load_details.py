@@ -48,7 +48,7 @@ class Command(BaseCommand):
                 continue
 
             info = dict(claim.detail_info or {})
-            # 合并常见字段
+
             if "denial_reason" in row and row["denial_reason"]:
                 info["denial_reason"] = row["denial_reason"].strip()
 
@@ -60,7 +60,7 @@ class Command(BaseCommand):
                     break
             cpts = parse_cpts(cpt_raw)
             if cpts:
-                info["cpt_codes"] = cpts  # 统一用 cpt_codes 存
+                info["cpt_codes"] = cpts
 
             if info != (claim.detail_info or {}):
                 self.stdout.write(f"claim_id={claim_id} detail_info -> {info}")
