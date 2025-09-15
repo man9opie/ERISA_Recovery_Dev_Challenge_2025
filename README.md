@@ -61,3 +61,6 @@ python manage.py load_details data/claims_detail --delimiter '|'
 python manage.py runserver
 ```
 The application will run at http://127.0.0.1:8000/.
+
+# Quick View:
+<img width="1920" height="1032" alt="image" src="https://github.com/user-attachments/assets/73067393-94c6-45e7-a781-679238a00076" />
