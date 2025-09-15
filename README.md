@@ -1,7 +1,9 @@
-# Claims Management System – Demo
+# ERISA Recovery Dev Challenge<br/>Claims Management System – Demo
+
+
 
 A small Django + HTMX demo for reviewing medical claims.  
-It includes a “user” table view with an HTMX detail panel, notes & flagging, and an **Admin Dashboard** showing average underpayment and claims needing review.
+It includes a user table view with an HTMX detail panel, notes & flagging, and an **Admin Dashboard** showing average underpayment and claims needing review.
 
 ## Features
 
@@ -17,6 +19,10 @@ It includes a “user” table view with an HTMX detail panel, notes & flagging,
   - **Flag** button disabled on admin side
 - HTMX-driven partials for smooth UI without a SPA
 
+## Bonus
+- Admin Dashboard
+- CSV Re-upload(support CSV overwrite or append new datas)
+
 ## Requirements
 - Python **3.10+** (3.12 tested)
 - pip / venv
@@ -24,23 +30,35 @@ It includes a “user” table view with an HTMX detail panel, notes & flagging,
 
 ## Quickstart
 
-```bash
 # 1) Clone
-git clone <YOUR_REPO_URL>.git
+```bash
+git clone https://github.com/man9opie/ERISA_Recovery_Dev_Challenge_2025.git
 cd ERISA_Recovery_Dev_Challenge_2025
-
+```
 # 2) Virtualenv
+```bash
 python -m venv .venv
 # Windows:
 .venv\Scripts\activate
 # macOS/Linux:
 # source .venv/bin/activate
+```
 
 # 3) Install deps
+```bash
 pip install -r requirements.txt
-
+```
 # 4) Migrate DB
+```bash
 python manage.py migrate
-
-# 5) Run
+```
+# 5) Load datas
+```bash
+python manage.py load_claims data/claims.csv --delimiter '|'
+python manage.py load_details data/claims_detail --delimiter '|' 
+```
+# 6) Run
+```bash
 python manage.py runserver
+```
+The application will run at http://127.0.0.1:8000/.
