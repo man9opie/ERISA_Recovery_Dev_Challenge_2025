@@ -12,16 +12,15 @@ It includes a user table view with an HTMX detail panel, notes & flagging, and a
   - Paginated table with status pills (Paid / Under Review / Denied)
   - Click **View** to load a claim **detail panel** (HTMX partial)
   - **Add Note** (inline form, instant append)
-  - **Flag for Review** (confirm dialog; prevents re-flagging if already Under Review)
+  - Real time Research and Filters.
+  - **Flag for Review** (re-flagging is prevented if already Under Review)
 - **Admin dashboard** (`/dashboard/`)
   - Average underpayment across all claims
-  - “Claims Needing Review” table (same visual style as user table)
-  - **Flag** button disabled on admin side
-- HTMX-driven partials for smooth UI without a SPA
+  - “Claims Needing Review” table 
 
 ## Bonus
-- Admin Dashboard
-- CSV Re-upload(support CSV overwrite or append new datas)
+- Admin Dashboard (able to view claims that being flag and average underpayment of the flag claims
+- CSV Re-upload (support CSV overwrite or append new datas)
 
 ## Requirements
 - Python **3.10+** (3.12 tested)
